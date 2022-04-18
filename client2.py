@@ -1,32 +1,97 @@
-#client2
+#client
 import socket
 import time
+import threading
 
 #define constants:
-HEADER = 8
+HEADER = 2048
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
+NODE_NAME = "client2"
+
+received_from_node=""
 
 #create client socket object
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDR)
+#attempt connection
+try:
+    client.connect(ADDR)
+except ConnectionRefusedError:
+    print("[UNABLE TO CONNECT TO WATCHDOG]")
+    print("[QUITTING]")
+    quit()
 
-def send_string_through_socket(msg):
+#lock object needed to manage access to sockets receving
+#so far only used for receiving as no other thread is sending
+#only the main thread is sending
+lock = threading.Lock()
+'''
+#using lock with context manager:
+with lock:
+    #statements
+# is equivalent to:
+lock.aquire()
+try:
+    #statements
+finally:
+    #statements
+'''
+
+def send_string_to_watchdog(msg):
     message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    #fixed size header holding the size of the message:
-    send_length += b' '*(HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    #received message from server
-    print(client.recv(2048).decode(FORMAT))
+    client.send(message) 
+    print("[SENDING TO WATCHDOG] " + msg)
 
-print(DISCONNECT_MESSAGE[0:3])
-send_string_through_socket("I am Client 2!")
-time.sleep(1)
-send_string_through_socket("data:Hello Client 1!")
-send_string_through_socket(DISCONNECT_MESSAGE)
+def receive_string_from_watchdog():
+    received_msg=client.recv(2048).decode(FORMAT)
+    print("[WATCHDOG SAID] " + received_msg)
+    return received_msg
+
+def register_node_with_watchdog():
+    if client.recv(2048).decode(FORMAT) == "name_request":
+    #register with server:
+        send_string_to_watchdog("name:"+NODE_NAME)
+
+#outgoing message handler:    
+def push_to_node(node_name, msg):
+    #send command to server plus node to send message to
+    #node name and msg sperate for now
+    #as node may have variable name length
+    send_string_to_watchdog("push:"+node_name)
+    temp = receive_string_from_watchdog()
+    if temp == "node_found_push_the_data":
+        send_string_to_watchdog(msg)
+        #print(receive_string_from_watchdog())
+    else:
+        print(f"[{NODE_NAME}] says: Pushing to {node_name} failed!")
+
+def pull_incoming_messages():
+    send_string_to_watchdog("pull_incoming_messages")
+    receive_string_from_watchdog()
+
+        
+
+def main():
+    #run main code here
+    #process robotic algorthm here
+    #compute stuff here
+    x=0
+    while True:
+        #update variables at the start of every loop
+        #topic varaibles and node messages
+        #use receive_string_from_watchdog()
+
+        pull_incoming_messages()
+        time.sleep(5)
+
+
+
+register_node_with_watchdog()
+
+
+main()
+
+send_string_to_watchdog(DISCONNECT_MESSAGE)

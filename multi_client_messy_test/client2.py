@@ -1,0 +1,32 @@
+#client2
+import socket
+import time
+
+#define constants:
+HEADER = 8
+PORT = 5050
+SERVER = socket.gethostbyname(socket.gethostname())
+ADDR = (SERVER, PORT)
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
+
+#create client socket object
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
+
+def send_string_through_socket(msg):
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    #fixed size header holding the size of the message:
+    send_length += b' '*(HEADER - len(send_length))
+    client.send(send_length)
+    client.send(message)
+    #received message from server
+    print(client.recv(2048).decode(FORMAT))
+
+print(DISCONNECT_MESSAGE[0:3])
+send_string_through_socket("I am Client 2!")
+time.sleep(1)
+send_string_through_socket("data:Hello Client 1!")
+send_string_through_socket(DISCONNECT_MESSAGE)

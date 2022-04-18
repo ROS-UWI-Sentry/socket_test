@@ -10,7 +10,7 @@ SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
-NODE_NAME = "client1"
+NODE_NAME = "client3"
 
 received_from_node=""
 
@@ -60,17 +60,13 @@ def push_to_node(node_name, msg):
     #send command to server plus node to send message to
     #node name and msg sperate for now
     #as node may have variable name length
-    try:
-        send_string_to_watchdog("push:"+node_name)
-        temp = receive_string_from_watchdog()
-        if temp == "node_found_push_the_data":
-            send_string_to_watchdog(msg)
-            #print(receive_string_from_watchdog())
-        else:
-            print(f"[{NODE_NAME}] says: Pushing to {node_name} failed!")
-    except AttributeError:
-        print("Incorrect data type sent, recheck")
-        quit()
+    send_string_to_watchdog("push:"+node_name)
+    temp = receive_string_from_watchdog()
+    if temp == "node_found_push_the_data":
+        send_string_to_watchdog(msg)
+        #print(receive_string_from_watchdog())
+    else:
+        print(f"[{NODE_NAME}] says: Pushing to {node_name} failed!")
 
 def pull_incoming_messages():
     send_string_to_watchdog("pull_incoming_messages")
@@ -83,16 +79,12 @@ def main():
     #process robotic algorthm here
     #compute stuff here
     x=0
-    push_to_node("client2", "tes22t21")
     while True:
         #update variables at the start of every loop
         #topic varaibles and node messages
         #use receive_string_from_watchdog()
 
-        pull_incoming_messages()
-        push_to_node("client2", str(x))
-        x=x+1
-        push_to_node("client2", str(x))
+        push_to_node("client1", "Hello From client3")
         time.sleep(5)
 
 
